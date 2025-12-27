@@ -1,4 +1,5 @@
 import { CartItem } from '@/types/book';
+import { CustomerInfo } from '@/types/order';
 
 const WHATSAPP_NUMBER = '923126203644';
 
@@ -18,7 +19,7 @@ function getItemPrice(item: CartItem): number {
   }
 }
 
-export function generateWhatsAppMessage(items: CartItem[]): string {
+export function generateWhatsAppMessage(items: CartItem[], customerInfo?: CustomerInfo): string {
   const itemLines = items.map((item, index) => {
     const price = getItemPrice(item);
     const typeLabel =
@@ -34,18 +35,39 @@ export function generateWhatsAppMessage(items: CartItem[]): string {
     0
   );
 
-  const message = `Greetings! I would like to acquire the following from the Potter Book Bank:
+  let message = `Greetings! I would like to acquire the following from the Potter Book Bank:
 
 ${itemLines.join('\n')}
 
-Total Tribute: Rs ${total}
-Please confirm my owl. 🦉`;
+Total Tribute: Rs ${total}`;
+
+  // Add customer details if provided
+  if (customerInfo && Object.values(customerInfo).some(v => v)) {
+    message += '\n\n📋 Customer Details:';
+    if (customerInfo.type) {
+      message += `\n• Type: ${customerInfo.type === 'college' ? 'College Student' : 'Outsider'}`;
+    }
+    if (customerInfo.semester) {
+      message += `\n• Semester: ${customerInfo.semester}`;
+    }
+    if (customerInfo.department) {
+      message += `\n• Department: ${customerInfo.department}`;
+    }
+    if (customerInfo.name) {
+      message += `\n• Name: ${customerInfo.name}`;
+    }
+    if (customerInfo.phone) {
+      message += `\n• Phone: ${customerInfo.phone}`;
+    }
+  }
+
+  message += '\n\nPlease confirm my owl. 🦉';
 
   return message;
 }
 
-export function openWhatsAppCheckout(items: CartItem[]): void {
-  const message = generateWhatsAppMessage(items);
+export function openWhatsAppCheckout(items: CartItem[], customerInfo?: CustomerInfo): void {
+  const message = generateWhatsAppMessage(items, customerInfo);
   const encodedMessage = encodeURIComponent(message);
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
   window.open(url, '_blank');

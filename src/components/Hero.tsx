@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import libraryBg from '@/assets/library-hero-bg.jpg';
-import potterLogo from '@/assets/potter-glasses-logo.webp';
+import potterLogo from '@/assets/potter-logo.png';
 import { FloatingBooks } from './FloatingBooks';
 
 export function Hero() {

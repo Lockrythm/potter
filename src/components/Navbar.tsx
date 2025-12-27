@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCart } from '@/contexts/CartContext';
 import { Badge } from '@/components/ui/badge';
-import potterLogo from '@/assets/potter-glasses-logo.webp';
+import potterLogo from '@/assets/potter-logo.png';
 
 interface NavbarProps {
   onSearch?: (query: string) => void;

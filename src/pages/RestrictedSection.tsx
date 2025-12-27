@@ -5,7 +5,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { useAllBooks } from '@/hooks/useBooks';
 import { useCategories } from '@/hooks/useCategories';
+import { useOrders } from '@/hooks/useOrders';
 import { Book, BookCondition, BookType, Category } from '@/types/book';
+import { Order } from '@/types/order';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,8 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Lock, Eye, EyeOff, Tag, BookOpen, Home, ArrowLeft } from 'lucide-react';
-import potterLogo from '@/assets/potter-glasses-logo.webp';
+import { Plus, Pencil, Trash2, Lock, Eye, EyeOff, Tag, BookOpen, Home, ArrowLeft, ShoppingBag, ChevronDown, ChevronUp } from 'lucide-react';
+import potterLogo from '@/assets/potter-logo.png';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'potter2024';
 
@@ -64,6 +66,8 @@ export default function RestrictedSection() {
 
   const { books, loading, error } = useAllBooks();
   const { categories, loading: categoriesLoading } = useCategories();
+  const { orders, loading: ordersLoading, updateOrderStatus } = useOrders();
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,6 +292,15 @@ export default function RestrictedSection() {
               <Tag className="h-4 w-4" />
               Categories
             </TabsTrigger>
+            <TabsTrigger value="orders" className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4" />
+              Orders
+              {orders.filter(o => o.status === 'pending').length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                  {orders.filter(o => o.status === 'pending').length}
+                </Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Books Tab */}
@@ -443,6 +456,148 @@ export default function RestrictedSection() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Orders Tab */}
+          <TabsContent value="orders">
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5 text-secondary" />
+                  Customer Orders
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  View and manage orders placed via WhatsApp
+                </p>
+              </CardHeader>
+              <CardContent>
+                {ordersLoading ? (
+                  <p className="text-muted-foreground py-8 text-center">Loading orders...</p>
+                ) : orders.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">
+                    No orders yet. Orders will appear here when customers checkout.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div
+                        key={order.id}
+                        className="border border-border/50 rounded-lg overflow-hidden"
+                      >
+                        {/* Order Header */}
+                        <div
+                          className="flex items-center justify-between p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <p className="font-medium text-sm">
+                                {order.customerInfo?.name || 'Anonymous'}{' '}
+                                <span className="text-muted-foreground">
+                                  ({order.customerInfo?.phone || 'No phone'})
+                                </span>
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {order.createdAt.toLocaleDateString()} at {order.createdAt.toLocaleTimeString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              variant={
+                                order.status === 'completed' ? 'default' :
+                                order.status === 'confirmed' ? 'secondary' :
+                                order.status === 'cancelled' ? 'destructive' : 'outline'
+                              }
+                              className="capitalize"
+                            >
+                              {order.status}
+                            </Badge>
+                            <span className="font-bold text-secondary">Rs {order.total}</span>
+                            {expandedOrderId === order.id ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Expanded Order Details */}
+                        {expandedOrderId === order.id && (
+                          <div className="p-4 space-y-4 border-t border-border/50">
+                            {/* Customer Info */}
+                            {order.customerInfo && Object.values(order.customerInfo).some(v => v) && (
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                {order.customerInfo.type && (
+                                  <div>
+                                    <span className="text-muted-foreground">Type:</span>{' '}
+                                    <span className="capitalize">{order.customerInfo.type === 'college' ? 'College Student' : 'Outsider'}</span>
+                                  </div>
+                                )}
+                                {order.customerInfo.semester && (
+                                  <div>
+                                    <span className="text-muted-foreground">Semester:</span>{' '}
+                                    {order.customerInfo.semester}
+                                  </div>
+                                )}
+                                {order.customerInfo.department && (
+                                  <div>
+                                    <span className="text-muted-foreground">Department:</span>{' '}
+                                    {order.customerInfo.department}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Order Items */}
+                            <div className="space-y-2">
+                              <p className="text-xs text-muted-foreground font-medium">Items:</p>
+                              {order.items.map((item: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-3 text-sm">
+                                  <div className="w-8 h-10 bg-muted rounded overflow-hidden flex-shrink-0">
+                                    {item.bookImageUrl ? (
+                                      <img src={item.bookImageUrl} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-xs">📖</div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium">{item.bookTitle}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {item.purchaseType === 'buy' ? 'Buy' : `Rent (${item.rentDuration} days)`}
+                                      {item.quantity > 1 && ` x${item.quantity}`}
+                                    </p>
+                                  </div>
+                                  <span className="font-medium">Rs {item.price * item.quantity}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Status Update */}
+                            <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+                              <span className="text-xs text-muted-foreground">Update status:</span>
+                              <div className="flex gap-1">
+                                {(['pending', 'confirmed', 'completed', 'cancelled'] as const).map((status) => (
+                                  <Button
+                                    key={status}
+                                    size="sm"
+                                    variant={order.status === status ? 'default' : 'outline'}
+                                    className={`text-xs h-7 capitalize ${order.status === status ? 'bg-secondary text-secondary-foreground' : ''}`}
+                                    onClick={() => updateOrderStatus(order.id, status)}
+                                  >
+                                    {status}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

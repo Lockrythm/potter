@@ -6,7 +6,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen, Clock, MessageCircle, Sparkles } from 'lucide-react';
-import potterLogo from '@/assets/potter-glasses-logo.webp';
+import potterLogo from '@/assets/potter-logo.png';
 
 const FEATURES = [
   {
