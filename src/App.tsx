@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { MagicalCursor } from "@/components/MagicalCursor";
-import { VideoTransition } from "@/components/VideoTransition";
 import Home from "./pages/Home";
 import Library from "./pages/Library";
 import RestrictedSection from "./pages/RestrictedSection";
@@ -23,14 +22,12 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <VideoTransition>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/restricted-section" element={<RestrictedSection />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </VideoTransition>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/restricted-section" element={<RestrictedSection />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>
