@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen, ShoppingBag } from 'lucide-react';
 import libraryBg from '@/assets/library-hero-bg.jpg';
 import potterLogo from '@/assets/potter-logo.png';
 import { FloatingBooks } from './FloatingBooks';
@@ -61,7 +61,7 @@ export function Hero() {
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />
             <span className="text-sm font-medium text-secondary">
-              The Magical Book Bank
+              Books & Academic Essentials
             </span>
           </motion.div>
 
@@ -72,10 +72,10 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            Unlock the{' '}
-            <span className="text-secondary magical-text-glow">Secrets</span>
+            Your One-Stop{' '}
+            <span className="text-secondary magical-text-glow">Academic</span>
             <br />
-            of Your <span className="text-secondary magical-text-glow">Semester</span>.
+            <span className="text-secondary magical-text-glow">Store</span>
           </motion.h1>
 
           {/* Subtext */}
@@ -85,8 +85,8 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            Discover affordable textbooks, rare notes, and essential academic scrolls. 
-            Rent or buy with a flick of a wand.
+            Discover affordable textbooks, academic supplies, and essential equipment. 
+            Buy or rent books, shop for stationery, lab gear, and more.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -102,7 +102,8 @@ export function Hero() {
               className="magical-button text-lg px-8 py-6 bg-primary border-2 border-secondary text-secondary hover:bg-secondary hover:text-primary-foreground transition-all duration-300"
             >
               <Link to="/library">
-                Enter the Library
+                <BookOpen className="mr-2 h-5 w-5" />
+                Browse Books
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
@@ -112,8 +113,9 @@ export function Hero() {
               size="lg"
               className="text-lg px-8 py-6 bg-transparent border-2 border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm"
             >
-              <Link to="/library?type=rent">
-                Rent Books
+              <Link to="/products">
+                <ShoppingBag className="mr-2 h-5 w-5" />
+                Shop Products
               </Link>
             </Button>
           </motion.div>
@@ -130,8 +132,8 @@ export function Hero() {
               <div className="text-sm text-primary-foreground/70">Books</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-secondary magical-text-glow">20+</div>
-              <div className="text-sm text-primary-foreground/70">Categories</div>
+              <div className="text-3xl md:text-4xl font-bold text-secondary magical-text-glow">100+</div>
+              <div className="text-sm text-primary-foreground/70">Products</div>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-secondary magical-text-glow">50%</div>

@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { MagicalCursor } from "@/components/MagicalCursor";
 import Home from "./pages/Home";
 import Library from "./pages/Library";
+import Products from "./pages/Products";
 import RestrictedSection from "./pages/RestrictedSection";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/library" element={<Library />} />
+              <Route path="/products" element={<Products />} />
               <Route path="/restricted-section" element={<RestrictedSection />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

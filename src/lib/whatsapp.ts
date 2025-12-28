@@ -1,4 +1,5 @@
 import { CartItem } from '@/types/book';
+import { ProductCartItem } from '@/types/product';
 import { CustomerInfo } from '@/types/order';
 
 const WHATSAPP_NUMBER = '923126203644';
@@ -19,25 +20,47 @@ function getItemPrice(item: CartItem): number {
   }
 }
 
-export function generateWhatsAppMessage(items: CartItem[], customerInfo?: CustomerInfo): string {
-  const itemLines = items.map((item, index) => {
-    const price = getItemPrice(item);
-    const typeLabel =
-      item.purchaseType === 'buy'
-        ? '[Buy]'
-        : `[Rent-${item.rentDuration} Days]`;
-    const qty = item.quantity > 1 ? ` x${item.quantity}` : '';
-    return `${index + 1}. ${typeLabel} ${item.book.title}${qty} – Rs ${price * item.quantity}`;
-  });
+export function generateWhatsAppMessage(
+  bookItems: CartItem[], 
+  productItems: ProductCartItem[],
+  customerInfo?: CustomerInfo
+): string {
+  let itemIndex = 1;
+  const lines: string[] = [];
 
-  const total = items.reduce(
-    (sum, item) => sum + getItemPrice(item) * item.quantity,
-    0
-  );
+  // Book items
+  if (bookItems.length > 0) {
+    lines.push('📚 BOOKS:');
+    bookItems.forEach((item) => {
+      const price = getItemPrice(item);
+      const typeLabel =
+        item.purchaseType === 'buy'
+          ? '[Buy]'
+          : `[Rent-${item.rentDuration} Days]`;
+      const qty = item.quantity > 1 ? ` x${item.quantity}` : '';
+      lines.push(`${itemIndex}. ${typeLabel} ${item.book.title}${qty} – Rs ${price * item.quantity}`);
+      itemIndex++;
+    });
+  }
 
-  let message = `Greetings! I would like to acquire the following from the Potter Book Bank:
+  // Product items
+  if (productItems.length > 0) {
+    if (bookItems.length > 0) lines.push('');
+    lines.push('📦 PRODUCTS:');
+    productItems.forEach((item) => {
+      const qty = item.quantity > 1 ? ` x${item.quantity}` : '';
+      lines.push(`${itemIndex}. ${item.product.name}${qty} – Rs ${item.product.price * item.quantity}`);
+      itemIndex++;
+    });
+  }
 
-${itemLines.join('\n')}
+  const booksTotal = bookItems.reduce((sum, item) => sum + getItemPrice(item) * item.quantity, 0);
+  const productsTotal = productItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const total = booksTotal + productsTotal;
+
+  let message = `Greetings! I would like to acquire the following from Potter:
+
+${lines.join('\n')}
 
 Total Tribute: Rs ${total}`;
 
@@ -61,13 +84,17 @@ Total Tribute: Rs ${total}`;
     }
   }
 
-  message += '\n\nPlease confirm my owl. 🦉';
+  message += '\n\nPlease confirm my order. 🦉';
 
   return message;
 }
 
-export function openWhatsAppCheckout(items: CartItem[], customerInfo?: CustomerInfo): void {
-  const message = generateWhatsAppMessage(items, customerInfo);
+export function openWhatsAppCheckout(
+  bookItems: CartItem[], 
+  productItems: ProductCartItem[],
+  customerInfo?: CustomerInfo
+): void {
+  const message = generateWhatsAppMessage(bookItems, productItems, customerInfo);
   const encodedMessage = encodeURIComponent(message);
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
   window.open(url, '_blank');
