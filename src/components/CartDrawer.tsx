@@ -12,13 +12,25 @@ import { Minus, Plus, Trash2, Send, Sparkles } from 'lucide-react';
 import { CheckoutForm } from './CheckoutForm';
 import { CustomerInfo } from '@/types/order';
 import { toast } from '@/hooks/use-toast';
+import { CartItem } from '@/types/book';
 
 export function CartDrawer() {
-  const { items, isOpen, setIsOpen, removeItem, updateQuantity, getTotal, clearCart } = useCart();
+  const { 
+    items, 
+    productItems,
+    isOpen, 
+    setIsOpen, 
+    removeItem, 
+    removeProductItem,
+    updateQuantity, 
+    updateProductQuantity,
+    getTotal, 
+    clearCart 
+  } = useCart();
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getItemPrice = (item: typeof items[0]) => {
+  const getBookItemPrice = (item: CartItem) => {
     if (item.purchaseType === 'buy') {
       return item.book.buyPrice;
     }
@@ -36,7 +48,7 @@ export function CartDrawer() {
 
   const handleCheckout = () => {
     // Open WhatsApp INSTANTLY - don't wait for Firebase
-    openWhatsAppCheckout(items, customerInfo);
+    openWhatsAppCheckout(items, productItems, customerInfo);
     
     toast({
       title: 'Order Sent!',
@@ -47,6 +59,7 @@ export function CartDrawer() {
     const now = new Date();
     const orderData = {
       items: items.map(item => ({
+        type: 'book',
         bookId: item.book.id,
         bookTitle: item.book.title,
         bookAuthor: item.book.author,
@@ -54,7 +67,15 @@ export function CartDrawer() {
         quantity: item.quantity,
         purchaseType: item.purchaseType,
         rentDuration: item.rentDuration || null,
-        price: getItemPrice(item),
+        price: getBookItemPrice(item),
+      })),
+      productItems: productItems.map(item => ({
+        type: 'product',
+        productId: item.product.id,
+        productName: item.product.name,
+        productImageUrl: item.product.imageUrl,
+        quantity: item.quantity,
+        price: item.product.price,
       })),
       customerInfo,
       total: getTotal(),
@@ -86,6 +107,8 @@ export function CartDrawer() {
     setIsOpen(false);
   };
 
+  const hasItems = items.length > 0 || productItems.length > 0;
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent className="w-full sm:max-w-md flex flex-col h-full p-0">
@@ -102,7 +125,7 @@ export function CartDrawer() {
           </SheetTitle>
         </SheetHeader>
 
-        {items.length === 0 ? (
+        {!hasItems ? (
           <motion.div 
             className="flex-1 flex flex-col items-center justify-center text-center p-6"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -117,7 +140,7 @@ export function CartDrawer() {
             </motion.span>
             <p className="text-muted-foreground">Your trunk is empty</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Add some books from the library
+              Add some books or products
             </p>
           </motion.div>
         ) : (
@@ -125,82 +148,168 @@ export function CartDrawer() {
             {/* Scrollable area for items + form */}
             <ScrollArea className="flex-1 min-h-0">
               <div className="px-6 py-4 space-y-4">
-                {/* Cart Items */}
-                <AnimatePresence mode="popLayout">
-                  {items.map((item, index) => (
-                    <motion.div 
-                      key={`${item.book.id}-${item.purchaseType}-${item.rentDuration}`} 
-                      className="flex gap-3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                      layout
-                    >
-                      {/* Book Image */}
-                      <motion.div 
-                        className="w-16 h-20 rounded bg-muted overflow-hidden flex-shrink-0"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        {item.book.imageUrl ? (
-                          <img
-                            src={item.book.imageUrl}
-                            alt={item.book.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-2xl">📖</span>
+                {/* Book Items */}
+                {items.length > 0 && (
+                  <>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">📚 Books</p>
+                    <AnimatePresence mode="popLayout">
+                      {items.map((item, index) => (
+                        <motion.div 
+                          key={`book-${item.book.id}-${item.purchaseType}-${item.rentDuration}`} 
+                          className="flex gap-3"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ delay: index * 0.05 }}
+                          layout
+                        >
+                          {/* Book Image */}
+                          <motion.div 
+                            className="w-16 h-20 rounded bg-muted overflow-hidden flex-shrink-0"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            {item.book.imageUrl ? (
+                              <img
+                                src={item.book.imageUrl}
+                                alt={item.book.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-2xl">📖</span>
+                              </div>
+                            )}
+                          </motion.div>
+
+                          {/* Book Details */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm line-clamp-1">
+                              {item.book.title}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {item.purchaseType === 'buy'
+                                ? 'Buy'
+                                : `Rent - ${item.rentDuration} days`}
+                            </p>
+                            <p className="text-sm font-semibold text-primary mt-1">
+                              Rs {getBookItemPrice(item)}
+                            </p>
+
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-6 w-6 hover:bg-secondary/20 hover:border-secondary"
+                                onClick={() => updateQuantity(item.book.id, item.quantity - 1)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="text-sm w-6 text-center">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-6 w-6 hover:bg-secondary/20 hover:border-secondary"
+                                onClick={() => updateQuantity(item.book.id, item.quantity + 1)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => removeItem(item.book.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
-                        )}
-                      </motion.div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </>
+                )}
 
-                      {/* Book Details */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm line-clamp-1">
-                          {item.book.title}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">
-                          {item.purchaseType === 'buy'
-                            ? 'Buy'
-                            : `Rent - ${item.rentDuration} days`}
-                        </p>
-                        <p className="text-sm font-semibold text-primary mt-1">
-                          Rs {getItemPrice(item)}
-                        </p>
+                {/* Product Items */}
+                {productItems.length > 0 && (
+                  <>
+                    {items.length > 0 && <Separator />}
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">📦 Products</p>
+                    <AnimatePresence mode="popLayout">
+                      {productItems.map((item, index) => (
+                        <motion.div 
+                          key={`product-${item.product.id}`} 
+                          className="flex gap-3"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ delay: index * 0.05 }}
+                          layout
+                        >
+                          {/* Product Image */}
+                          <motion.div 
+                            className="w-16 h-20 rounded bg-muted overflow-hidden flex-shrink-0"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            {item.product.imageUrl ? (
+                              <img
+                                src={item.product.imageUrl}
+                                alt={item.product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-2xl">📦</span>
+                              </div>
+                            )}
+                          </motion.div>
 
-                        {/* Quantity Controls */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-secondary/20 hover:border-secondary"
-                            onClick={() => updateQuantity(item.book.id, item.quantity - 1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="text-sm w-6 text-center">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-secondary/20 hover:border-secondary"
-                            onClick={() => updateQuantity(item.book.id, item.quantity + 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => removeItem(item.book.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                          {/* Product Details */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm line-clamp-1">
+                              {item.product.name}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {item.product.category}
+                            </p>
+                            <p className="text-sm font-semibold text-primary mt-1">
+                              Rs {item.product.price}
+                            </p>
+
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-6 w-6 hover:bg-secondary/20 hover:border-secondary"
+                                onClick={() => updateProductQuantity(item.product.id, item.quantity - 1)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="text-sm w-6 text-center">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-6 w-6 hover:bg-secondary/20 hover:border-secondary"
+                                onClick={() => updateProductQuantity(item.product.id, item.quantity + 1)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => removeProductItem(item.product.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </>
+                )}
 
                 <Separator />
 

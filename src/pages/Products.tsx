@@ -2,24 +2,29 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { CartDrawer } from '@/components/CartDrawer';
-import { BookCard } from '@/components/BookCard';
-import { FilterDrawer } from '@/components/FilterDrawer';
-import { VideoLoader } from '@/components/VideoLoader';
-import { useBooks } from '@/hooks/useBooks';
+import { ProductCard } from '@/components/ProductCard';
+import { useProducts } from '@/hooks/useProducts';
+import { productCategories } from '@/types/product';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Filter, X } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import libraryBg from '@/assets/library-bg.jpg';
 
-export default function Library() {
+export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   
   const [category, setCategory] = useState(searchParams.get('category') || '');
-  const [condition, setCondition] = useState(searchParams.get('condition') || '');
-  const [type, setType] = useState(searchParams.get('type') || '');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
-  const { books, loading, error } = useBooks({
+  const { products, loading, error } = useProducts({
     category: category || undefined,
-    condition: condition || undefined,
-    type: type || undefined,
     searchQuery: searchQuery || undefined,
   });
 
@@ -27,16 +32,12 @@ export default function Library() {
   useEffect(() => {
     const params = new URLSearchParams();
     if (category) params.set('category', category);
-    if (condition) params.set('condition', condition);
-    if (type) params.set('type', type);
     if (searchQuery) params.set('search', searchQuery);
     setSearchParams(params, { replace: true });
-  }, [category, condition, type, searchQuery, setSearchParams]);
+  }, [category, searchQuery, setSearchParams]);
 
   const handleClearFilters = () => {
     setCategory('');
-    setCondition('');
-    setType('');
     setSearchQuery('');
   };
 
@@ -50,7 +51,7 @@ export default function Library() {
       <div className="fixed inset-0 -z-10">
         <img 
           src={libraryBg} 
-          alt="Library Background" 
+          alt="Background" 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-background/80 dark:bg-background/85" />
@@ -65,41 +66,67 @@ export default function Library() {
           {/* Header */}
           <div className="mb-8 animate-fade-in">
             <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground dark:text-white">
-              The <span className="text-primary">Library</span>
+              The <span className="text-primary">Store</span>
             </h1>
             <p className="text-muted-foreground dark:text-white/70">
-              Browse our magical collection. Buy or rent your favorite books.
+              Browse our collection of essential academic supplies and equipment.
             </p>
           </div>
 
           {/* Filter Bar */}
           <div className="flex items-center justify-between mb-6 animate-fade-in">
-            <FilterDrawer
-              selectedCategory={category}
-              selectedCondition={condition}
-              selectedType={type}
-              onCategoryChange={setCategory}
-              onConditionChange={setCondition}
-              onTypeChange={setType}
-              onClearFilters={handleClearFilters}
-            />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader>
+                  <SheetTitle>Filter Products</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Category</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {productCategories.map((cat) => (
+                        <Button
+                          key={cat}
+                          variant={category === cat ? 'secondary' : 'outline'}
+                          size="sm"
+                          onClick={() => setCategory(category === cat ? '' : cat)}
+                        >
+                          {cat}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {(category || searchQuery) && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-destructive"
+                      onClick={handleClearFilters}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Clear All Filters
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
             
             {/* Active Filter Tags */}
             <div className="flex gap-2 flex-wrap">
               {category && (
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary/20 text-secondary border border-secondary/30">
+                <Badge variant="secondary" className="gap-1">
                   {category}
-                </span>
-              )}
-              {condition && (
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary/20 text-secondary border border-secondary/30">
-                  {condition}
-                </span>
-              )}
-              {type && (
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary/20 text-secondary border border-secondary/30">
-                  {type}
-                </span>
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => setCategory('')}
+                  />
+                </Badge>
               )}
             </div>
           </div>
@@ -115,39 +142,33 @@ export default function Library() {
           {error && (
             <div className="text-center py-12">
               <p className="text-destructive">{error}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Please check your Firebase configuration in the environment variables.
-              </p>
             </div>
           )}
 
-          {/* Loading State - Video Loader */}
-          {loading && <VideoLoader />}
-
           {/* Empty State */}
-          {!loading && !error && books.length === 0 && (
+          {!loading && !error && products.length === 0 && (
             <div className="text-center py-12 animate-fade-in">
-              <span className="text-6xl block mb-4">📚</span>
-              <p className="text-muted-foreground dark:text-white/70">No books found</p>
+              <span className="text-6xl block mb-4">📦</span>
+              <p className="text-muted-foreground dark:text-white/70">No products found</p>
               <p className="text-sm text-muted-foreground dark:text-white/60">
                 Try adjusting your filters or search query
               </p>
             </div>
           )}
 
-          {/* Books Grid */}
-          {!loading && !error && books.length > 0 && (
+          {/* Products Grid */}
+          {!loading && !error && products.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 animate-fade-in">
-              {books.map((book) => (
-                <BookCard key={book.id} book={book} />
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
 
           {/* Results Count */}
-          {!loading && !error && books.length > 0 && (
+          {!loading && !error && products.length > 0 && (
             <p className="text-sm text-muted-foreground dark:text-white/70 text-center mt-8">
-              Showing {books.length} book{books.length !== 1 ? 's' : ''}
+              Showing {products.length} product{products.length !== 1 ? 's' : ''}
             </p>
           )}
         </main>

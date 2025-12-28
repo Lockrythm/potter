@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Sun, Moon, ShoppingBag } from 'lucide-react';
+import { Search, Sun, Moon, ShoppingBag, BookOpen, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,12 +46,28 @@ export function Navbar({ onSearch }: NavbarProps) {
               />
             </motion.div>
             <motion.span 
-              className="font-cinzel text-xl font-bold text-primary hidden sm:block"
+              className="font-cinzel text-xl font-bold text-foreground dark:text-white hidden sm:block"
               whileHover={{ color: 'hsl(var(--secondary))' }}
             >
               Potter
             </motion.span>
           </Link>
+
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/library" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                Books
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/products" className="gap-2">
+                <Package className="h-4 w-4" />
+                Products
+              </Link>
+            </Button>
+          </div>
 
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="flex-1 max-w-md">
@@ -59,7 +75,7 @@ export function Navbar({ onSearch }: NavbarProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search the library..."
+                placeholder="Search books & products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-muted/50"
